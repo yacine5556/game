@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>🍕 متجر البيتزا</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #1b1b1b;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+
+.card {
+  background: #2a2a2a;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 15px auto;
+  max-width: 350px;
+}
+
+button {
+  font-size: 18px;
+  padding: 15px;
+  margin: 10px;
+  width: 80%;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sell {
+  background: #ff9800;
+}
+
+.upgrade {
+  background: #4caf50;
+}
+
+.stats {
+  font-size: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🍕 متجر البيتزا</h1>
+
+<div class="card stats">
+  💰 الرصيد: <span id="money">0</span>$<br>
+  🍕 سعر البيتزا: <span id="price">1</span>$
+</div>
+
+<div class="card">
+  <button class="sell" onclick="sellPizza()">🍕 بيع بيتزا</button>
+  <button class="upgrade" onclick="upgradePrice()">⬆️ تطوير السعر (10$)</button>
+</div>
+
+<script>
+let money = 0;
+let price = 1;
+
+function sellPizza() {
+  money += price;
+  updateUI();
+  sendData();
+}
+
+function upgradePrice() {
+  if (money >= 10) {
+    money -= 10;
+    price += 1;
+    updateUI();
+    sendData();
+  } else {
+    alert("❌ لا تملك رصيد كافي");
+  }
+}
+
+function updateUI() {
+  document.getElementById("money").innerText = money;
+  document.getElementById("price").innerText = price;
+}
+
+function sendData() {
+  Telegram.WebApp.sendData(JSON.stringify({
+    money: money,
+    price: price
+  }));
+}
+</script>
+
+</body>
+</html>
