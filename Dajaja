@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بوت الدجاجة الرابحة</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1c1c1c;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .score-container {
+            margin-bottom: 20px;
+        }
+        .score-label { font-size: 1rem; color: #aaa; margin: 0; }
+        .score { font-size: 3.5rem; font-weight: bold; color: #f3ba2f; margin: 0; }
+
+        /* تصميم الدجاجة */
+        .chicken {
+            width: 150px;
+            height: 150px;
+            background-color: #ffd700;
+            border-radius: 50% 50% 45% 45%;
+            position: relative;
+            cursor: pointer;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            z-index: 2;
+            transition: transform 0.1s;
+        }
+
+        .comb { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 30px; background: #ff4d4d; border-radius: 50% 50% 0 0; }
+        .eye { position: absolute; top: 40px; width: 12px; height: 12px; background: black; border-radius: 50%; }
+        .eye.left { left: 35px; }
+        .eye.right { right: 35px; }
+        .beak { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 20px solid #ffa500; }
+        
+        /* الأجنحة مع نقطة ارتكاز للحركة */
+        .wing { 
+            position: absolute; 
+            top: 60px; 
+            width: 45px; 
+            height: 50px; 
+            background: #ffcc00; 
+            border-radius: 50%; 
+            transition: transform 0.1s ease;
+        }
+        .wing.left { left: -25px; transform-origin: right center; transform: rotate(-20deg); }
+        .wing.right { right: -25px; transform-origin: left center; transform: rotate(20deg); }
+
+        .leg { position: absolute; bottom: -20px; width: 6px; height: 25px; background: #ffa500; }
+        .leg.left { left: 50px; }
+        .leg.right { right: 50px; }
+
+        /* --- أنيميشن الحركة عند النقر --- */
+        
+        /* حركة الجسم (قفزة مع ميلان) */
+        @keyframes chickenJump {
+            0% { transform: scale(1) translateY(0) rotate(0); }
+            50% { transform: scale(0.9) translateY(-10px) rotate(5deg); }
+            100% { transform: scale(1) translateY(0) rotate(0); }
+        }
+
+        /* حركة الجناح الأيسر */
+        @keyframes flapLeft {
+            0% { transform: rotate(-20deg); }
+            50% { transform: rotate(-60deg); }
+            100% { transform: rotate(-20deg); }
+        }
+
+        /* حركة الجناح الأيمن */
+        @keyframes flapRight {
+            0% { transform: rotate(20deg); }
+            50% { transform: rotate(60deg); }
+            100% { transform: rotate(20deg); }
+        }
+
+        .animate-body { animation: chickenJump 0.15s ease-out; }
+        .animate-wing-l { animation: flapLeft 0.15s ease-out; }
+        .animate-wing-r { animation: flapRight 0.15s ease-out; }
+
+        #speech-bubble {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            transition: opacity 0.1s;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="score-container">
+        <p class="score-label">رصيدك من البيض 🥚</p>
+        <div class="score" id="score">0</div>
+    </div>
+
+    <div id="speech-bubble">بق بقيق! +1</div>
+    <br>
+    
+    <div class="chicken" id="myChicken">
+        <div class="comb"></div>
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+        <div class="beak"></div>
+        <div class="wing left" id="wingL"></div>
+        <div class="wing right" id="wingR"></div>
+        <div class="leg left"></div>
+        <div class="leg right"></div>
+    </div>
+    
+    <p style="margin-top: 40px; color: #888;">انقر على الدجاجة لجمع النقاط!</p>
+</div>
+
+<audio id="chickenSound" src="https://www.soundjay.com/misc/sounds/chicken-1.mp3"></audio>
+
+<script>
+    let count = parseInt(localStorage.getItem('chickenScore')) || 0;
+    const scoreDisplay = document.getElementById('score');
+    const chicken = document.getElementById('myChicken');
+    const wingL = document.getElementById('wingL');
+    const wingR = document.getElementById('wingR');
+    const bubble = document.getElementById('speech-bubble');
+    const sound = document.getElementById('chickenSound');
+
+    scoreDisplay.innerText = count;
+
+    function interact() {
+        count++;
+        scoreDisplay.innerText = count;
+        localStorage.setItem('chickenScore', count);
+
+        // الصوت
+        sound.currentTime = 0;
+        sound.play();
+
+        // تفعيل الحركات
+        const elements = [chicken, wingL, wingR];
+        const classes = ['animate-body', 'animate-wing-l', 'animate-wing-r'];
+
+        elements.forEach((el, i) => {
+            el.classList.remove(classes[i]);
+            void el.offsetWidth; // إعادة تهيئة الـ DOM لتكرار الأنيميشن
+            el.classList.add(classes[i]);
+        });
+        
+        // فقاعة الكلام
+        bubble.style.opacity = '1';
+        setTimeout(() => { bubble.style.opacity = '0'; }, 300);
+
+        // الاهتزاز
+        if (navigator.vibrate) { navigator.vibrate(15); }
+    }
+
+    // دعم النقر واللمس المتعدد
+    chicken.addEventListener('mousedown', (e) => {
+        if (e.button === 0) interact(); 
+    });
+
+    chicken.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        // دعم النقر المتعدد بالأصابع
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            interact();
+        }
+    }, {passive: false});
+</script>
+
+</body>
+</html>
